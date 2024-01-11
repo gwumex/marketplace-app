@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { addNewItem, getUser } from "@/db/utils";
@@ -26,12 +27,14 @@ import { Textarea } from "./ui/textarea";
 import { DollarSign } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { User } from "@/db/schema";
+import { time } from "console";
 
 /* 
   This component is responsible for rendering the create listing modal. It is displayed when the user
   clicks the "Sell" button in the header.
 */
 export default function CreateListingModal() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null); // The current user
   const [name, setName] = useState<string>(""); // The name of the listing
   const [description, setDescription] = useState<string>(""); // The description of the listing
@@ -53,6 +56,17 @@ export default function CreateListingModal() {
       TODO: If the session exists and the user is logged in, get the user from the database and 
       update the user state.
     */
+      if (session && status === "authenticated") {
+        async function fetchUser() {
+          try {
+            const userResult = await getUser(session?.user?.name)
+            setUser(userResult)
+          } catch (error) {
+            console.log("err:", error);
+          }
+        }
+        fetchUser()
+      }
 
   }, [session]);
 
@@ -64,38 +78,81 @@ export default function CreateListingModal() {
     /* 
       TODO: If the user is not logged in, return.
     */
+   if( status !== "authenticated"){
+    return;
+   }
 
     
     /*
       TODO: Set loading to true.
     */
+   setLoading(true)
 
 
     /* 
       TODO: Parse the quantity and listing price as an integer and float, respectively. If either is 
       invalid, set error to true and return.
     */
+      let parsedQuantity;
+      let parsedListingPrice;
+    if(quantity && listingPrice){
+      parsedQuantity = parseInt(quantity)
+      parsedListingPrice = parseInt(listingPrice)
+    } else {
+      setError(true)
+      return
+    }
 
 
     /* 
       TODO: Add the new item to the database. 
       HINT: Create a new id for the item using Math.random().toString(36).substring(7)
     */
+   try {
+    const timestamp = Date.now();
+    const id = Math.random().toString(36).substring(7)
+    const item = {
+      id: id,
+      owner: user?.username,
+      title: name,
+      description: description,
+      price: parsedListingPrice,
+      totalSupply: parsedQuantity,
+      timestamp: timestamp,
+      listed: 1,
+      image: url,
+      category: category
+    }
+    const newItem = await addNewItem(item)
 
-    /*
-      TODO: Set loading to false and success to true.
-    */
+    if(newItem.changes === 1){
+      /*
+        TODO: Set loading to false and success to true.
+      */
+      setLoading(false)
+      setSuccess(true)
+   
+      /* 
+        TODO: Clear the form fields.
+      */
+        setName("")
+        setDescription("")
+        setListingPrice("")
+        setUrl("")
+        setQuantity("1")
+        setCategory(null)
+   
+      /* 
+        TODO: Redirect the user to their page with the listings tab selected.
+      */
+      router.push(`/seller/${user?.username}`);
 
+    }
+   
 
-    /* 
-      TODO: Clear the form fields.
-    */
-
-
-    /* 
-      TODO: Redirect the user to their page with the listings tab selected.
-    */
-
+   } catch (error) {
+    console.log("err:", error);
+   }
   };
 
   /*

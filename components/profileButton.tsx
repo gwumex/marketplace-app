@@ -66,7 +66,7 @@ export default function ProfileButton() {
 
         async function fetchShopBalance() {
           try {
-            const balanceResult = await getUserShopBalance(user)
+            const balanceResult = await getUserShopBalance(session?.user?.name)
             if(balanceResult !== null){
               setShopBalance(balanceResult)
             }
