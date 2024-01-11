@@ -81,34 +81,33 @@ export default function Home() {
     if (categoryParam && !category) {
       return;
     }
-
+    
     // DO NOT MODIFY - This prevents the page from loading items before the category and search query
     if (searchParam && !search) {
       return;
     }
     
     /*
-      TODO: Set the isLoading state variable to true.
+    TODO: Set the isLoading state variable to true.
     */
-    setIsLoading(true)
-
-    /* 
-      TODO: Get the items from the database with the correct filters and sorting method. Then, update
-      the items state variable and set the isLoading state variable to false.
-
-      HINT: Filter for only listed items as well. 
-    */
-     // Define an async function to fetch items
+   setIsLoading(true)
+   
+   /* 
+   TODO: Get the items from the database with the correct filters and sorting method. Then, update
+   the items state variable and set the isLoading state variable to false.
+   
+   HINT: Filter for only listed items as well. 
+   */
+  // Define an async function to fetch items
   async function fetchItems() {
     try {
-      // Fetch items with the necessary filters
-      const queryParams = {
-        listed: 1, // Assuming '1' means listed items
-        category: category,
-        search: search,
-        sort: sorting
-      };
-
+         // Fetch items with the necessary filters
+         const queryParams = {
+           listed: 1, // Assuming '1' means listed items
+           category: category?.value,
+           search: search,
+           sort: sorting
+          };
       const items = await getItems(queryParams);
 
       // Update the items state variable

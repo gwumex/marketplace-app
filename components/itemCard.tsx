@@ -31,23 +31,50 @@ export default function ItemCard({ itemId }: { itemId: string }) {
   const { data: session } = useSession(); // The current session
 
   /* 
-    On page load, get the current item and user.
+  On page load, get the current item and user.
   */
-  useEffect(() => {
-    /* 
-      TODO: Get the current item and user, and if the user is logged in, check if the item is on the 
-      user's watch list. Update the item, user, and isWatched states.
-    */
+ useEffect(() => {
+   /* 
+     TODO: Get the current item and user, and if the user is logged in, check if the item is on the 
+     user's watch list. Update the item, user, and isWatched states.
+   */
+    async function fetchCurrentItem() {
+      const currentItem = await getItemById(itemId)
+      setItem(currentItem)
+    }
+
+    fetchCurrentItem()
+
+    if (session && status === "authenticated") {
+      async function fetchUser() {
+          try {
+            const userResult = await getUser(session?.user?.name)
+            setUser(userResult)
+          } catch (error) {
+            console.log("err:", error);
+          }
+        }
+        fetchUser()
+      
+    }
+
+    async function fetchIsUserWatchingItem() {
+      const result = await isUserWatchingItem(session?.user?.name, itemId)
+      setIsWatched(result)
+    }
     
   }, [itemId, session]);
 
   /* 
     If the item is null, return an empty fragment (`<></>`).
   */
+  if(item === null){
+    return <></>
+  }
 
-  /* 
-    TODO: Otherwise, return the following UI: 
-    ```
+    // TODO: Otherwise, return the following UI: 
+
+  return (
     <a href={`/item/${item.owner}/${item.id}`}>
       <Card className="hover:scale-105 transform transition duration-300 ">
         <CardHeader className="px-0 py-0">
@@ -99,8 +126,7 @@ export default function ItemCard({ itemId }: { itemId: string }) {
         </CardFooter>
       </Card>
     </a>
-    ```
-  */
+  )
 
   return <></>; // PLACEHOLDER
 }

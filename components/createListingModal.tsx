@@ -121,9 +121,10 @@ export default function CreateListingModal() {
       timestamp: timestamp,
       listed: 1,
       image: url,
-      category: category
+      category: category?.value
     }
-    const newItem = await addNewItem(item)
+
+    const newItem = await addNewItem(item)    
 
     if(newItem.changes === 1){
       /*
