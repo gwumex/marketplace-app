@@ -36,10 +36,14 @@ export default function Home() {
   /* 
     TODO: Get the category and search query from the URL.
   */
-  const categoryParam = null; // PLACEHOLDER
-  const searchParam = null; // PLACEHOLDER
+    const Params = useSearchParams();
 
-  /* 
+   ;
+
+  const categoryParam = Params.get("category"); // PLACEHOLDER
+  const searchParam = Params.get("search"); // PLACEHOLDER
+
+  /* Params.get("search")
     On page load, set the category and search query based on the URL.
   */
   useEffect(() => {
@@ -48,11 +52,23 @@ export default function Home() {
       Otherwise, leave the category state variable as null.
       HINT: Use the valueToCategory function to convert the category param to a Category object.
     */
+    if (categoryParam){
+      setCategory(valueToCategory(categoryParam))
+    }
+    else {
+      setCategory(null)
+    }
 
     /* 
       TODO: If the search param is set, set the search state variable to the corresponding search query.
       Otherwise, leave the search state variable as an empty string.
     */
+      if (searchParam){
+        setSearch(searchParam)
+       }
+      else {
+        setSearch("")
+       }
     
   }, []);
 
@@ -60,7 +76,7 @@ export default function Home() {
     Whenever the category, search query, or sorting method changes, update the list of items to be
     displayed. This will also be done on page load.
   */
-  useEffect(() => {
+  useEffect( () => {
     // DO NOT MODIFY - This prevents the page from loading items before the category and search query
     if (categoryParam && !category) {
       return;
@@ -74,6 +90,7 @@ export default function Home() {
     /*
       TODO: Set the isLoading state variable to true.
     */
+    setIsLoading(true)
 
     /* 
       TODO: Get the items from the database with the correct filters and sorting method. Then, update
@@ -81,7 +98,32 @@ export default function Home() {
 
       HINT: Filter for only listed items as well. 
     */
-    
+     // Define an async function to fetch items
+  async function fetchItems() {
+    try {
+      // Fetch items with the necessary filters
+      const queryParams = {
+        listed: 1, // Assuming '1' means listed items
+        category: category,
+        search: search,
+        sort: sorting
+      };
+
+      const items = await getItems(queryParams);
+
+      // Update the items state variable
+      setItems(items); // Assuming there's a state setter called 'setItems'
+    } catch (error) {
+      console.error("Error fetching items:", error);
+    } finally {
+      // Set the isLoading state variable to false
+      setIsLoading(false);
+    }
+  }
+
+  // Call the fetchItems function
+  fetchItems();
+   
   }, [sorting, category, search]);
 
   return (
