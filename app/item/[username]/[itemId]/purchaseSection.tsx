@@ -1,5 +1,5 @@
 "use client";
-
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,8 @@ export default function PurchaseSection({
   itemImage: string;
   itemPrice: number;
 }) {
+  const router = useRouter();
+
   const { toast } = useToast(); // The toast hook
 
   const [user, setUser] = useState<User | null>(null); // The current user
@@ -66,8 +68,22 @@ export default function PurchaseSection({
             user state variable. Then, check if the user is the seller of the item to update the 
             userStatus state variable. Finally, check if the user is watching the item to update the 
             isWatched state variable.
-    */
-    
+        
+    */  
+          async function fetchUser() {
+            const session = await getSession();
+            if(session){
+              try {
+                const userResult = await getUser(session?.user?.name)
+                setUser(userResult)
+                setUserStatus(userResult.username === sellerUsername ? UserStatus.Seller : UserStatus.Buyer);
+                isUserWatchingItem(userResult.username, itemId).then(setIsWatched);
+              } catch (error) {
+                console.log("err:", error);
+              }
+            }
+          }
+          fetchUser()
   }, []);
 
   /* 
@@ -78,31 +94,52 @@ export default function PurchaseSection({
       TODO: Add a check to see if the user is logged in and is the buyer of the item
       If not, return
     */
+      const session = await getSession();
+
+   if (!session && userStatus !== UserStatus.Buyer){
+    return;
+   }
 
     /*
       TODO: Set loading to true
     */
+   setLoading(true)
 
     /*
       TODO: Parse the quantity state variable to ensure that it is a valid integer
       If not, set error to "Invalid quantity!", set loading to false, and return
     */
+      let parsedQuantity;
 
+      // Check if 'quantity' is a valid number and greater than 0
+      if (quantity && !isNaN(quantity) && parseInt(quantity) > 0) {
+          parsedQuantity = parseInt(quantity);
+      } else {
+          setError("Invalid quantity!");
+          setLoading(false);
+          return;
+      }
+      
     /*
       TODO: Call the purchaseItem function
     */
+   const purchase = await purchaseItem(itemId, parsedQuantity, session?.user?.name)
 
     /*
       TODO: Set success to "Purchase successful!"
     */
-    
-    /*
-      TODO: Set loading to false
-    */
+    if (purchase !== null) {
+      setSuccess("Purchase successful!")
+      /*
+        TODO: Set loading to false
+      */
+      setLoading(false)
+      /*
+        TODO: Redirect the user to the purchases tab of their profile page
+      */
+        router.push(`/seller/${user?.username}`);
 
-    /*
-      TODO: Redirect the user to the purchases tab of their profile page
-    */
+    }
 
   };
 
@@ -114,29 +151,70 @@ export default function PurchaseSection({
       TODO: Add a check to see if the user is logged in and is the buyer of the item
       If not, return
     */
+      const session = await getSession();
+
+      if (!session && userStatus !== UserStatus.Buyer){
+       return;
+      }
 
     /*
       TODO: Retrieve the cart from local storage and parse it into a CartItem array
     */
+      const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+
 
     /*
       TODO: Parse the quantity state variable to ensure that it is a valid integer
       If not, set error to "Invalid quantity!", set loading to false, and return
     */
+      let parsedQuantity = parseInt(quantity);
+      if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+        setError("Invalid quantity!");
+        setLoading(false);
+        return;
+      }
 
     /*
       TODO: If the item is already in the cart, increment the quantity of the item in the cart, 
       otherwise, add the item to the cart
     */
+      const existingItemIndex = cart.findIndex(item => item.itemId === itemId);
+      if (existingItemIndex !== -1) {
+        cart[existingItemIndex].quantity += parsedQuantity;
+      } else {
+        cart.push({ 
+          itemId, 
+          itemTitle, 
+          itemPrice, 
+          itemImage, 
+          quantity: parsedQuantity 
+        });
+      }
 
     /*
       TODO: Stringify the cart and set it in local storage
     */
+      localStorage.setItem("cart", JSON.stringify(cart));
 
     /*
       TODO: Dispatches an event to update the cart icon in the navbar and displays a toast
       HINT: Dispatch an event with the name "cartUpdated"
     */
+      const event = new Event("cartUpdated");
+      window.dispatchEvent(event);
+    
+      // Display a success toast
+      toast({
+        title: "Added to cart",
+        description: `${itemTitle} added to cart successfully.`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
+    
+      // Optional: Reset loading and error state
+      setLoading(false);
+      setError("");
 
   };
 

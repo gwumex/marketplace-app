@@ -28,7 +28,7 @@ export default function ItemCard({ itemId }: { itemId: string }) {
   const [item, setItem] = useState<Item | null>(null); // The current item
   const [isWatched, setIsWatched] = useState(false); // Whether the item is on the user's watch list
 
-  const { data: session } = useSession(); // The current session
+  const { data: session, status } = useSession(); // The current session
 
   /* 
   On page load, get the current item and user.
@@ -62,6 +62,7 @@ export default function ItemCard({ itemId }: { itemId: string }) {
       const result = await isUserWatchingItem(session?.user?.name, itemId)
       setIsWatched(result)
     }
+    fetchIsUserWatchingItem()
     
   }, [itemId, session]);
 
